@@ -55,7 +55,6 @@ class MiscellaneousApi {
       await ApiClient.instance.dio.delete(
         'posts/$id',
       );
-      await getPosts();
     } on DioError catch (error) {
       Helpers.debugDioError(error);
       rethrow;

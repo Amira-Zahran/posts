@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:posts_app/controller/posts_provider.dart';
 import 'package:posts_app/view/screens/post_screen.dart';
+import 'package:provider/provider.dart';
 import '../../core/dialogs/confirmation_dialog.dart';
-import '../../core/services/http/apis/miscellaneous_api.dart';
 import '../../core/utils/snackbars.dart';
 import '../../core/utils/util_values.dart';
 import '../../core/widgets/custom_app_bar.dart';
 import '../../core/widgets/loading_widget.dart';
-import '../../model/posts_model.dart';
 import 'loca_widgets/custom_post.dart';
 
 class PostsScreen extends StatelessWidget {
@@ -17,41 +17,48 @@ class PostsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'All Posts', ),
-      body: FutureBuilder<List<PostsModel>>(
-          future: MiscellaneousApi.getPosts(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: LoadingWidget(),
-              );
-            }
+      body: FutureBuilder(
+              future: Provider.of<PostsProvider>(context,listen:false).getPosts(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: LoadingWidget(),
+                  );
+                }
 
-            final posts = snapshot.data!;
+                /*final postsProvider = context.read<PostsProvider>();
 
-            if (posts.isEmpty) {
-              return const SizedBox.shrink();
-            }
-            return ListView.builder(
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: UtilValues.padding8,
-                child: InkWell(
-                  onTap: (){
-                    Navigator.pushNamed(context, PostScreen.routeName, arguments: posts[index]);
-                  },
-                  child: CustomPostWidget(
-                    allPosts: true,
-                    description: posts[index].body.toString(),
-                    nameAuthor: posts[index].userId.toString(),
-                    voidCallbackUpvote: () => _deletePost(id: posts[index].id ?? 0, context: context),
-                    title: posts[index].title.toString(), numberOfReplies: 0,
-                  ),
-                ),
+                final posts = postsProvider.posts;*/
+
+                final posts = Provider.of<PostsProvider>(context,listen:false).posts;
+
+                if (posts.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Consumer<PostsProvider>(builder: (context, provider, _) {
+                  return ListView.builder(
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: UtilValues.padding8,
+                        child: InkWell(
+                          onTap: (){
+                            Navigator.pushNamed(context, PostScreen.routeName, arguments: posts[index]);
+                          },
+                          child: CustomPostWidget(
+                            allPosts: true,
+                            description: posts[index].body.toString(),
+                            nameAuthor: posts[index].userId.toString(),
+                            voidCallbackUpvote: () => _deletePost(id: posts[index].id ?? 0, context: context),
+                            title: posts[index].title.toString(), numberOfReplies: 0,
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: posts.length,
               );
-            },
-            itemCount: posts.length,
-          );
-        }
+                  }
+                );
+            }
       ),
     );
   }
@@ -69,13 +76,12 @@ class PostsScreen extends StatelessWidget {
       );
 
       if (!confirmed) return;
-      await MiscellaneousApi.deletePost(id: id).then((value) {
+      await Provider.of<PostsProvider>(context,listen:false).deletePost(id: id).then((value) {
         showSnackbar(
           context: context,
           status: SnackbarStatus.success,
           message: 'Deleted successfully'.toString(),
         );
-        //Navigator.of(context).pushNamed(PostScreen.routeName);
       });
 
     } catch (error) {

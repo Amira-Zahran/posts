@@ -3,7 +3,9 @@ import 'package:posts_app/core/widgets/custom_app_bar.dart';
 import 'package:posts_app/model/comments_model.dart';
 import 'package:posts_app/model/posts_model.dart';
 import 'package:posts_app/view/screens/posts_screen.dart';
+import 'package:provider/provider.dart';
 
+import '../../controller/posts_provider.dart';
 import '../../core/dialogs/confirmation_dialog.dart';
 import '../../core/services/http/apis/miscellaneous_api.dart';
 import '../../core/utils/snackbars.dart';
@@ -25,8 +27,8 @@ class PostScreen extends StatelessWidget {
         appBar: const CustomAppBar(title: 'Post & comments', backButton: BackButton(),),
         body: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: FutureBuilder<List<CommentsModel>>(
-              future: MiscellaneousApi.getComments(id: post.id ?? 0),
+          child: FutureBuilder(
+              future: Provider.of<PostsProvider>(context,listen:false).getComments(id: post.id ?? 0),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -34,7 +36,7 @@ class PostScreen extends StatelessWidget {
                   );
                 }
 
-                final comments = snapshot.data!;
+                final comments = Provider.of<PostsProvider>(context,listen:false).comments;
 
                 if (comments.isEmpty) {
                   return const SizedBox.shrink();
@@ -94,7 +96,7 @@ class PostScreen extends StatelessWidget {
       );
 
       if (!confirmed) return;
-      await MiscellaneousApi.deletePost(id: id).then((value) {
+      await Provider.of<PostsProvider>(context,listen:false).deletePost(id: id).then((value) {
         showSnackbar(
           context: context,
           status: SnackbarStatus.success,
